@@ -8,15 +8,14 @@
   // access data
   let data = [];
   d3.csv(
-    "https://raw.githubusercontent.com/the-pudding/data/master/mars-weather/mars-weather.csv"
+    "https://raw.githubusercontent.com/toltman/brk-stock/main/data/Berkshire%20Hathaway%20vs%20SP500.csv"
   ).then((res) => {
     data = res.slice(0, 100);
   });
 
-  let yMetric = "max_temp";
-
-  const xAccessor = (d) => new Date(d.terrestrial_date);
-  $: yAccessor = (d) => parseInt(d[yMetric]);
+  const xAccessor = (d) => new Date(d.year);
+  const brkAccessor = (d) => parseFloat(d.brk);
+  const spAccessor = (d) => parseFloat(d.sp500);
 
   // create chart dimensions
   let margin = {
@@ -39,7 +38,7 @@
 
   $: yScale = d3
     .scaleLinear()
-    .domain(d3.extent(data, yAccessor))
+    .domain([d3.min(data, spAccessor), d3.max(data, brkAccessor)])
     .range([boundsHeight, 0])
     .nice(true);
 
@@ -48,7 +47,7 @@
   $: quadtree = d3
     .quadtree()
     .x((d) => xScale(xAccessor(d)))
-    .y((d) => yScale(yAccessor(d)))
+    .y((d) => yScale(brkAccessor(d)))
     .addAll(data);
 </script>
 
@@ -57,10 +56,9 @@
   use:inview
   on:enter={(event) => {
     // show the min_temp property on the y axis
-    yMetric = "min_temp";
   }}
 >
-  Minimum temperature {d3.min(data, yAccessor)}
+  Minimum temperature {d3.min(data, brkAccessor)}
 </div>
 
 <div
@@ -68,10 +66,9 @@
   use:inview
   on:enter={(event) => {
     // show the max_temp property on the y axis
-    yMetric = "max_temp";
   }}
 >
-  Maximum temperature: {d3.max(data, yAccessor)}
+  Maximum temperature: {d3.max(data, brkAccessor)}
 </div>
 
 <div
@@ -99,16 +96,16 @@
 </div>
 
 <div class="fixed">
-  <h2>Weather on Mars Over Time</h2>
+  <h2>Berkshire Hathawway vs the Market</h2>
 
   <figure>
     <div class="wrapper" bind:clientWidth={width} bind:clientHeight={height}>
       <svg {width} {height}>
         <g transform="translate({margin.left}, {margin.top})">
-          {#each data as d, i (d.id)}
+          {#each data as d}
             <circle
               cx={xScale(xAccessor(d))}
-              cy={yScale(yAccessor(d))}
+              cy={yScale(brkAccessor(d))}
               r="5"
               style="
                 transition: all 0.3s;
@@ -130,7 +127,7 @@
               if (!closestPoint) return;
               const hoveredPointPosition = [
                 xScale(xAccessor(closestPoint)),
-                yScale(yAccessor(closestPoint)),
+                yScale(brkAccessor(closestPoint)),
               ];
               // don't highlight if too far away
               // a^2 + b^2 = c^2
@@ -150,7 +147,7 @@
           <AxisHorizontal
             scale={xScale}
             count="5"
-            format={d3.timeFormat("%-m/%Y")}
+            format={d3.timeFormat("%Y")}
           />
         </g>
         <g transform="translate({margin.left}, 0)">
@@ -161,23 +158,23 @@
         class="label"
         style="transform: translate({margin.left + 6}px, -10px)"
       >
-        {yMetric}
+        BRK
       </div>
 
       {#if hoveredPoint}
         <Tooltip
           x={margin.left + xScale(xAccessor(hoveredPoint))}
-          y={margin.top + yScale(yAccessor(hoveredPoint))}
+          y={margin.top + yScale(brkAccessor(hoveredPoint))}
           placement={[
             xScale(xAccessor(hoveredPoint)) > boundsWidth - 50 ? -90 : -50,
-            yScale(yAccessor(hoveredPoint)) < 80 ? 0 : -100,
+            yScale(brkAccessor(hoveredPoint)) < 80 ? 0 : -100,
           ]}
         >
           <strong>
-            {d3.timeFormat("%b %-d, %Y")(xAccessor(hoveredPoint))}
+            {d3.timeFormat("%Y")(xAccessor(hoveredPoint))}
           </strong>
           <div>
-            max temp: {hoveredPoint.max_temp}°C
+            ${d3.format(",.0f")(hoveredPoint.brk)}
           </div>
         </Tooltip>
       {/if}
