@@ -60,11 +60,13 @@
 
   // update chart based on new data
   function updateChart(data) {
-    specifiedXDomain = [xAccessor(data[0]), xAccessor(data[data.length - 1])];
-    specifiedYDomain = [
-      0,
-      Math.max(d3.max(data, brkAccessor), d3.max(data, spAccessor)),
-    ];
+    if (data.length) {
+      specifiedXDomain = [xAccessor(data[0]), xAccessor(data[data.length - 1])];
+      specifiedYDomain = [
+        0,
+        Math.max(d3.max(data, brkAccessor), d3.max(data, spAccessor)),
+      ];
+    }
   }
 </script>
 
