@@ -10,7 +10,7 @@
   d3.csv(
     "https://raw.githubusercontent.com/toltman/brk-stock/main/data/Berkshire%20Hathaway%20vs%20SP500.csv"
   ).then((res) => {
-    data = res.slice(0, 100);
+    data = res;
   });
 
   const xAccessor = (d) => new Date(d.year);
@@ -21,8 +21,8 @@
   let margin = {
     left: 30,
     top: 0,
-    right: 30,
-    bottom: 30,
+    right: 0,
+    bottom: 0,
   };
   let width = 400;
   let height = 300;
@@ -31,16 +31,26 @@
 
   // create scales
   let specifiedXRange = null;
+  let specifiedXDomain = null;
   $: xScale = d3
     .scaleTime()
-    .domain(d3.extent(data, xAccessor))
+    .domain(specifiedXDomain || d3.extent(data, xAccessor))
     .range(specifiedXRange || [0, boundsWidth]);
 
+  let specifiedYDomain = null;
   $: yScale = d3
     .scaleLinear()
-    .domain([d3.min(data, spAccessor), d3.max(data, brkAccessor)])
+    .domain(
+      specifiedYDomain || [d3.min(data, spAccessor), d3.max(data, brkAccessor)]
+    )
     .range([boundsHeight, 0])
     .nice(true);
+
+  // draw data
+  $: lineD = d3
+    .line()
+    .x((d) => xScale(xAccessor(d)))
+    .y((d) => yScale(brkAccessor(d)))(data);
 
   // set up interactions
   let hoveredPoint = null;
@@ -89,7 +99,15 @@
     // make the bounds 2000px wide
     // hint: you might need to make a new variable within the <script/>
     // hint: you also have access to a "leave" event
-    boundsWidth = 2000;
+    let subset = data.slice(0, 10);
+    specifiedXDomain = [
+      xAccessor(subset[0]),
+      xAccessor(subset[subset.length - 1]),
+    ];
+    specifiedYDomain = [
+      0,
+      Math.max(d3.max(subset, brkAccessor), d3.max(subset, spAccessor)),
+    ];
   }}
 >
   Zoom in on the start of the data
@@ -102,13 +120,20 @@
     <div class="wrapper" bind:clientWidth={width} bind:clientHeight={height}>
       <svg {width} {height}>
         <g transform="translate({margin.left}, {margin.top})">
+          <path
+            d={lineD}
+            fill="none"
+            stroke="sienna"
+            stroke-width="5"
+            style="transition: 3s"
+          />
           {#each data as d}
             <circle
               cx={xScale(xAccessor(d))}
               cy={yScale(brkAccessor(d))}
               r="5"
               style="
-                transition: all 0.3s;
+                transition: all 3s;
               "
               fill={hoveredPoint === d ? "skyblue" : "sienna"}
               stroke={hoveredPoint === d ? "black" : "none"}
