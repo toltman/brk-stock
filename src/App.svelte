@@ -19,10 +19,10 @@
 
   // create chart dimensions
   let margin = {
-    left: 30,
-    top: 0,
-    right: 0,
-    bottom: 0,
+    left: 60,
+    top: 10,
+    right: 60,
+    bottom: 20,
   };
   let width = 400;
   let height = 300;
@@ -34,15 +34,13 @@
   let specifiedXDomain = null;
   $: xScale = d3
     .scaleTime()
-    .domain(specifiedXDomain || d3.extent(data, xAccessor))
+    .domain(specifiedXDomain || d3.extent(data.slice(0, 5), xAccessor))
     .range(specifiedXRange || [0, boundsWidth]);
 
   let specifiedYDomain = null;
   $: yScale = d3
     .scaleLinear()
-    .domain(
-      specifiedYDomain || [d3.min(data, spAccessor), d3.max(data, brkAccessor)]
-    )
+    .domain(specifiedYDomain || [0, d3.max(data.slice(0, 5), brkAccessor)])
     .range([boundsHeight, 0])
     .nice(true);
 
@@ -59,58 +57,55 @@
     .x((d) => xScale(xAccessor(d)))
     .y((d) => yScale(brkAccessor(d)))
     .addAll(data);
-</script>
 
-<div
-  class="scroll-section"
-  use:inview
-  on:enter={(event) => {
-    // show the min_temp property on the y axis
-  }}
->
-  Minimum temperature {d3.min(data, brkAccessor)}
-</div>
-
-<div
-  class="scroll-section"
-  use:inview
-  on:enter={(event) => {
-    // show the max_temp property on the y axis
-  }}
->
-  Maximum temperature: {d3.max(data, brkAccessor)}
-</div>
-
-<div
-  class="scroll-section"
-  use:inview
-  on:enter={(event) => {
-    // set the tooltip to show the first data point
-    hoveredPoint = data[d3.minIndex(data, xAccessor)];
-  }}
->
-  First data point
-</div>
-
-<div
-  class="scroll-section"
-  use:inview
-  on:enter={(event) => {
-    // make the bounds 2000px wide
-    // hint: you might need to make a new variable within the <script/>
-    // hint: you also have access to a "leave" event
-    let subset = data.slice(0, 10);
-    specifiedXDomain = [
-      xAccessor(subset[0]),
-      xAccessor(subset[subset.length - 1]),
-    ];
+  // update chart based on new data
+  function updateChart(data) {
+    specifiedXDomain = [xAccessor(data[0]), xAccessor(data[data.length - 1])];
     specifiedYDomain = [
       0,
-      Math.max(d3.max(subset, brkAccessor), d3.max(subset, spAccessor)),
+      Math.max(d3.max(data, brkAccessor), d3.max(data, spAccessor)),
     ];
-  }}
+  }
+</script>
+
+<div class="scroll-section" use:inview on:enter={updateChart(data.slice(0, 5))}>
+  Getting started
+</div>
+
+<div
+  class="scroll-section"
+  use:inview
+  on:enter={updateChart(data.slice(0, 15))}
 >
-  Zoom in on the start of the data
+  The 70's
+</div>
+
+<div
+  class="scroll-section"
+  use:inview
+  on:enter={updateChart(data.slice(0, 25))}
+>
+  The 80's
+</div>
+
+<div
+  class="scroll-section"
+  use:inview
+  on:enter={updateChart(data.slice(0, 35))}
+>
+  The 90's
+</div>
+
+<div
+  class="scroll-section"
+  use:inview
+  on:enter={updateChart(data.slice(0, 45))}
+>
+  The 2000's
+</div>
+
+<div class="scroll-section" use:inview on:enter={updateChart(data)}>
+  The 2010's
 </div>
 
 <div class="fixed">
@@ -175,7 +170,7 @@
             format={d3.timeFormat("%Y")}
           />
         </g>
-        <g transform="translate({margin.left}, 0)">
+        <g transform="translate({margin.left}, {margin.top})">
           <AxisVertical count="5" scale={yScale} />
         </g>
       </svg>
@@ -206,8 +201,6 @@
     </div>
   </figure>
 </div>
-
-0
 
 <style>
   .fixed {
@@ -242,7 +235,7 @@
   }
 
   svg {
-    overflow: visible;
+    overflow: hidden;
   }
 
   h2 {
