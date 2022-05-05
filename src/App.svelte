@@ -21,7 +21,7 @@
   let margin = {
     left: 60,
     top: 10,
-    right: 60,
+    right: 0,
     bottom: 20,
   };
   let width = 400;
@@ -49,6 +49,11 @@
     .line()
     .x((d) => xScale(xAccessor(d)))
     .y((d) => yScale(brkAccessor(d)))(data);
+
+  $: lineSP500 = d3
+    .line()
+    .x((d) => xScale(xAccessor(d)))
+    .y((d) => yScale(spAccessor(d)))(data);
 
   // set up interactions
   let hoveredPoint = null;
@@ -111,7 +116,10 @@
 </div>
 
 <div class="fixed">
-  <h2>Berkshire Hathawway vs the Market</h2>
+  <h2>
+    <span style="font-size: 1.5em">B</span>ERKSHIRE
+    <span style="font-size: 1.5em">H</span>ATHAWAY
+  </h2>
 
   <figure>
     <div class="wrapper" bind:clientWidth={width} bind:clientHeight={height}>
@@ -121,6 +129,13 @@
             d={lineD}
             fill="none"
             stroke="sienna"
+            stroke-width="5"
+            style="transition: 3s"
+          />
+          <path
+            d={lineSP500}
+            fill="none"
+            stroke="green"
             stroke-width="5"
             style="transition: 3s"
           />
@@ -134,6 +149,7 @@
               "
               fill={hoveredPoint === d ? "skyblue" : "sienna"}
               stroke={hoveredPoint === d ? "black" : "none"}
+              visibility="hidden"
             />
           {/each}
 
@@ -173,17 +189,11 @@
           />
         </g>
         <g transform="translate({margin.left}, {margin.top})">
-          <AxisVertical count="5" scale={yScale} />
+          <AxisVertical count="5" scale={yScale} format={(d) => "$" + d} />
         </g>
       </svg>
-      <div
-        class="label"
-        style="transform: translate({margin.left + 6}px, -10px)"
-      >
-        BRK
-      </div>
 
-      {#if hoveredPoint}
+      <!-- {#if hoveredPoint}
         <Tooltip
           x={margin.left + xScale(xAccessor(hoveredPoint))}
           y={margin.top + yScale(brkAccessor(hoveredPoint))}
@@ -199,7 +209,7 @@
             ${d3.format(",.0f")(hoveredPoint.brk)}
           </div>
         </Tooltip>
-      {/if}
+      {/if} -->
     </div>
   </figure>
 </div>
@@ -207,7 +217,7 @@
 <style>
   .fixed {
     position: fixed;
-    top: 0;
+    top: 25%;
     right: 0;
     bottom: 0;
     left: 0;
@@ -242,14 +252,7 @@
 
   h2 {
     text-align: center;
-    font-family: sans-serif;
-  }
-
-  .label {
-    position: absolute;
-    top: 0;
-    left: 0;
-    max-width: 4em;
-    font-size: 0.6em;
+    font-family: "Times New Roman", Times, serif;
+    color: rgb(0, 0, 128);
   }
 </style>
